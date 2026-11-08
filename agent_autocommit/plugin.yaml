@@ -1,0 +1,47 @@
+name: agent-autocommit
+version: "1.0.0"
+manifest_version: 2
+api_version: 1
+description: "Every agent commits its own edits locally at the end of each turn: only its own hunks, author = the profile, never a push. Commit messages and WHY.md link each change to its Kanban card."
+author: "agent-autocommit contributors"
+license: MIT
+tags: [git, kanban, audit, multi-agent]
+provides_hooks:
+  - pre_tool_call
+  - post_tool_call
+  - post_llm_call
+  - kanban_task_completed
+config_schema:
+  roots:
+    type: list
+    default: []
+    label: "Roots"
+    description: "Folders whose git repos may take commits (e.g. [\"~/projects\"]). Empty = the plugin does nothing."
+  exclude_paths:
+    type: list
+    default: []
+    label: "Excluded paths"
+    description: "Absolute or root-relative paths: a repo that overlaps one is never committed to. Globs (matched against absolute paths) skip only what they match."
+  exclude_ledger:
+    type: str
+    default: ""
+    label: "Exclusion ledger (optional)"
+    description: "A JSON Lines file whose rows name paths to exclude (e.g. a deploy log). Leave empty to skip."
+  exclude_ledger_field:
+    type: str
+    default: "target"
+    description: "Field of each ledger row that holds the path."
+  allow_remote_repos:
+    type: bool
+    default: false
+    label: "Commit in repos with a remote"
+    description: "Off: repos with any git remote are skipped. On: they get local commits too. The plugin never pushes."
+  author_email_domain:
+    type: str
+    default: "hermes.local"
+    description: "Commits are authored as <profile>@<this domain>."
+  write_why_md:
+    type: bool
+    default: true
+    label: "Write WHY.md"
+    description: "When a Kanban card that produced commits is done, add one entry to WHY.md in each repo it changed."
