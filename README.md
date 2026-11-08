@@ -1,12 +1,28 @@
-# agent-autocommit
+# Hermes Nervous System — Auto Commit
+> **The missing operational nervous system and shared memory for autonomous multi-agent teams.**  
+> *(Hermes Plugin: `agent-autocommit`)*
 
-A [Hermes Agent](https://hermes-agent.nousresearch.com) plugin that commits each agent's own edits locally at the end of
-every turn. Each commit holds only that agent's hunks and is authored as the agent's profile. If the turn worked a
-Kanban card, the commit also records the card and its reason.
+While modern agent harnesses and multi-agent platforms excel at individual reasoning, deploying a collaborative team of agents creates chaos: agents overwrite each other's work, pollute shared environments, hallucinate completed actions, and leave operators with opaque black-box chat logs.
 
-When several agents (profiles, gateway sessions, Kanban workers) share one working tree, `git log` soon stops telling
-you who changed what. agent-autocommit gives every turn its own commit, author `<profile> (Hermes)`, and links it to
-the card it was done for. To undo one agent's turn, run `git revert <sha>`.
+**Hermes Nervous System (Auto Commit)** turns local Git into an indestructible, conflict-free operational backbone, project management ledger, and permanent team memory for multi-agent organizations.
+
+---
+
+### Why this is the Nervous System (Key Pillars)
+
+#### 1. Tamper-Proof Multi-Agent Memory & Identity
+Git is no longer just for software engineers—it becomes the distributed, permanent ledger of the team. Every agent turn is atomically snapshot, isolated, and committed under that specific agent's profile identity (`builder (Hermes)`, `researcher (Hermes)`, `designer (Hermes)`).
+
+#### 2. Autonomous Project Management & Human-Readable Receipts
+Built natively for goal-driven operations and Kanban workflows. When agents work on a business objective or Kanban task, every commit automatically binds to the task ID and records the underlying business rationale (`Why:`). Upon task completion, it automatically synthesizes `WHY.md`—a living executive changelog so non-technical founders and operators know exactly what changed and why, without wading through millions of reasoning tokens.
+
+#### 3. Surgical, Conflict-Free Parallel Collaboration
+Multiple autonomous agents can work simultaneously in the same workspace without collisions. By bypassing shared staging and operating on isolated hunks via direct Git plumbing (`commit-tree`, `update-ref`), agents never stomp on each other's in-flight edits. If two agents touch the same file concurrently, the engine safely isolates changes rather than corrupting work.
+
+#### 4. Verifiable Operations for Non-Technical Founders
+Bridging the gap between raw developer tools and real-world business operations. Non-technical founders running daily operations gain a deterministic audit trail: instant surgical rollbacks (`git revert <sha>`), agent accountability, and zero hallucinated progress.
+
+---
 
 ## What it does
 
@@ -30,7 +46,7 @@ the card it was done for. To undo one agent's turn, run `git revert <sha>`.
 ## Install
 
 ```bash
-hermes plugins install https://github.com/<owner>/agent-autocommit#agent_autocommit --enable
+hermes plugins install https://github.com/gatoarmen/agent-autocommit#agent_autocommit --enable
 ```
 
 Or, from a local checkout, link the plugin folder into a profile:
