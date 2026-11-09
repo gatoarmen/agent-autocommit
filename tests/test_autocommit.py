@@ -294,3 +294,26 @@ def test_profile_reads_get_hermes_home(tmp_path, monkeypatch):
     assert mod._profile() == "writer"
     monkeypatch.setenv("HERMES_HOME", str(tmp_path / ".hermes"))
     assert mod._profile() == "default"
+
+
+def test_repo_config_fsmonitor_never_runs(plugin, tmp_path):
+    # A repo's own .git/config can name a command as core.fsmonitor; git status would run it on the host.
+    mod, work, _ = plugin
+    repo = make_repo(work / "tool")
+    marker = tmp_path / "fsmonitor-ran"
+    git(repo, "config", "core.fsmonitor", f"touch {marker}; false")
+    (repo / "a.txt").write_text("changed\n")
+    mod._git(repo, "status", "--porcelain=v1")
+    assert not marker.exists()
+
+
+def test_repo_config_clean_filter_never_runs_when_hashing(plugin, tmp_path):
+    # A clean filter from the repo's config would run during the comparison-only hash-object.
+    mod, work, _ = plugin
+    repo = make_repo(work / "tool")
+    marker = tmp_path / "filter-ran"
+    git(repo, "config", "filter.evil.clean", f"touch {marker}; cat")
+    (repo / ".gitattributes").write_text("*.txt filter=evil\n")
+    (repo / "a.txt").write_text("changed\n")
+    assert mod._hash(repo, "a.txt")
+    assert not marker.exists()

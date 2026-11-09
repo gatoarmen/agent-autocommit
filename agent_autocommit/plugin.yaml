@@ -2,6 +2,7 @@ name: agent-autocommit
 version: "1.0.0"
 manifest_version: 2
 api_version: 1
+requires_hermes: ">=0.21.6"
 description: "Every agent commits its own edits locally at the end of each turn: only its own hunks, author = the profile, never a push. Commit messages and WHY.md link each change to its Kanban card."
 author: "agent-autocommit contributors"
 license: MIT
