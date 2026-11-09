@@ -24,6 +24,17 @@ Bridging the gap between raw developer tools and real-world business operations.
 
 ---
 
+## Demo (78s Walkthrough)
+
+> **Watch the Hermes Nervous System in action:** Five autonomous agents operate concurrently on a single repository with zero staging conflicts, isolated per-profile git commits, and automatic executive changelogs (`WHY.md`).
+
+[![Hermes Nervous System Demo](assets/demo-preview.jpg)](https://github.com/gatoarmen/agent-autocommit/releases/download/v1.0.0/fleet-video-nervous-system.mp4)
+
+🎬 **[Click here to play / download the 78s Demo MP4 (1080p)](https://github.com/gatoarmen/agent-autocommit/releases/download/v1.0.0/fleet-video-nervous-system.mp4)**  
+*(Rendered locally from 99 real Git commits using Remotion — zero AI credits consumed).*
+
+---
+
 ## What it does
 
 - **Snapshots on first touch.** The first time a session edits a file with `write_file` or `patch`, the plugin saves
