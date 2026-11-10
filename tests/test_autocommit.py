@@ -317,3 +317,31 @@ def test_repo_config_clean_filter_never_runs_when_hashing(plugin, tmp_path):
     (repo / "a.txt").write_text("changed\n")
     assert mod._hash(repo, "a.txt")
     assert not marker.exists()
+
+
+def test_repo_hooks_never_run_during_commit(plugin, tmp_path):
+    # Hooks inside .git/hooks (reference-transaction, post-index-change) must be disabled via core.hooksPath=/dev/null.
+    mod, work, _ = plugin
+    repo = make_repo(work / "tool")
+    marker = tmp_path / "hook-ran"
+    hooks_dir = repo / ".git" / "hooks"
+    hooks_dir.mkdir(exist_ok=True)
+    for hook_name in ("reference-transaction", "post-index-change"):
+        h = hooks_dir / hook_name
+        h.write_text(f"#!/bin/sh\ntouch {marker}\n")
+        h.chmod(0o755)
+    edit(mod, repo / "a.txt", "new-content\n", "s1")
+    mod.commit_session("s1", "turn")
+    assert not marker.exists()
+
+
+def test_repo_config_clean_filter_never_runs_during_commit_session(plugin, tmp_path):
+    # Clean filter must never run when hash-object writes blobs during commit_session.
+    mod, work, _ = plugin
+    repo = make_repo(work / "tool")
+    marker = tmp_path / "filter-write-ran"
+    git(repo, "config", "filter.evil.clean", f"touch {marker}; cat")
+    (repo / ".gitattributes").write_text("*.txt filter=evil\n")
+    edit(mod, repo / "a.txt", "brand-new\n", "s1")
+    mod.commit_session("s1", "turn")
+    assert not marker.exists()

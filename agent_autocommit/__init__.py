@@ -243,7 +243,7 @@ def excluded(path: Path, *, repo: bool = False) -> str | None:
 
 def _git(root: Path | str, *args: str) -> tuple[int, str]:
     try:
-        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", "core.quotepath=false", *args], cwd=str(root), capture_output=True,
+        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "-c", "core.quotepath=false", *args], cwd=str(root), capture_output=True,
                               text=True, timeout=30, check=False)
         return done.returncode, done.stdout if done.returncode == 0 else done.stderr
     except (OSError, subprocess.SubprocessError) as error:
