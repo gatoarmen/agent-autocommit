@@ -53,6 +53,10 @@ Bridging the gap between raw developer tools and real-world business operations.
 - **Stays out of the way.** It skips gitignored files, secret-looking names (`.env*`, `*.pem`, `*token*`, `id_rsa*`,
   ...), files over 5 MB, `node_modules`/`.venv`/`__pycache__`, and the Hermes install itself. Errors are logged at
   debug level and never raised into the agent.
+- **Never runs a repo's content filters.** A repo whose own config (`.git/config`, its includes, or the worktree
+  config) defines `filter.<name>.clean` or `filter.<name>.process` is skipped entirely, before any `git status`.
+  This includes Git LFS repos (`git lfs install --local`). Filters in your global or system config are yours and
+  do not cause a skip. See ADR-005.
 
 ## Install
 

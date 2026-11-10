@@ -281,6 +281,8 @@ def eligible_root(path: Path | str) -> Path | None:
         return None
     if excluded(repo, repo=True):
         return None
+    if engine.local_filter_problem(repo):
+        return None  # clean/process filters (LFS too): git status could run them on a racily clean file
     if not setting("allow_remote_repos"):
         code, remotes = _git(repo, "remote")
         if code or remotes.strip():

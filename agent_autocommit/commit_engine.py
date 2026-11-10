@@ -49,10 +49,38 @@ def _same_dir(a: str | Path, b: str | Path) -> bool:
     return os.path.normcase(os.path.realpath(str(a))) == os.path.normcase(os.path.realpath(str(b)))
 
 
-def _repo_problem(root: Path) -> str | None:
-    """Why `root` cannot take a commit: no repository, no HEAD, or a repository whose top is somewhere else.
+FILTER_KEY_RE = r"^filter\..*\.(clean|process)$"
+"""Repo-config keys that make git run a command on file content (clean filters, long-running process filters)."""
 
-    The last case matters: a folder nested inside another repository must never commit into that repository."""
+
+def local_filter_problem(root: Path) -> str | None:
+    """Why `root` must be skipped because its own config defines a content filter, or None.
+
+    `git status` re-hashes a "racily clean" file (same size, mtime equal to the index's) through its clean filter,
+    and `-c` cannot switch filters off. A repo's config is not ours to trust, so any repo whose local config (with
+    its includes, and the per-worktree config) defines `filter.<driver>.clean` or `.process` is never touched. This
+    also leaves LFS repos (`filter.lfs.*`) alone. A failed `git config` read counts as a filter: fail closed."""
+    scopes = [("--local", "--includes")]
+    code, ext = _git_out(root, "config", "--local", "--bool", "--get", "extensions.worktreeConfig")
+    if not code and ext.strip() == b"true":
+        scopes.append(("--worktree", "--includes"))
+    for scope in scopes:
+        code, out = _git_out(root, "config", *scope, "--name-only", "--get-regexp", FILTER_KEY_RE)
+        if code == 1 and not out.strip():
+            continue  # exit 1 with no output: no such key
+        if code:
+            return f"repo config unreadable ({scope[0]}): {out.decode(errors='replace').strip()[:200]}"
+        names = sorted({line.strip() for line in out.decode(errors="replace").splitlines() if line.strip()})
+        if names:
+            return f"repo config defines content filters ({', '.join(names)}); never run them"
+    return None
+
+
+def _repo_problem(root: Path) -> str | None:
+    """Why `root` cannot take a commit: no repository, no HEAD, a repository whose top is somewhere else, or a
+    repository whose own config defines content filters (see `local_filter_problem`).
+
+    The nested case matters: a folder nested inside another repository must never commit into that repository."""
     code, top = _git_out(root, "rev-parse", "--show-toplevel")
     if code:
         return "no HEAD: not a git repository with a commit"
@@ -62,7 +90,7 @@ def _repo_problem(root: Path) -> str | None:
     code, _ = _git_out(root, "rev-parse", "--verify", "HEAD")
     if code:
         return "no HEAD: not a git repository with a commit"
-    return None
+    return local_filter_problem(root)
 
 
 def _bytes(value: Content) -> bytes | None:

@@ -81,3 +81,27 @@ a home of the form `<root>/profiles/<name>` gives `<name>`, and anything else (t
 `hermes_constants.get_default_hermes_root()` instead of `~/.hermes`. No justification or allow-list entry is needed.
 
 **Consequences.** Validation passes with no private-import warning.
+
+## ADR-005: Skip repos whose local config defines content filters
+
+**Status:** accepted (2026-11-10)
+
+**Context.** A repo's own `.git/config` is not trusted: it can come from a clone, an archive or another tool. The
+plugin already neutralises the commands git would take from it (`core.fsmonitor=false`, `core.hooksPath=/dev/null`)
+and hashes and writes blobs with `--no-filters`. One path was still open. `git status` re-hashes a "racily clean"
+file (same size as in the index, mtime equal to the index's) to find out whether it really changed, and it does that
+through the configured clean filter. There is no `-c` switch that turns filters off for `status`. Reproduced: a repo
+with `filter.evil.clean = touch PWNED; cat`, a same-size edit and `touch -r .git/index x`, and a plain
+`git status --porcelain` printed `?? PWNED`. LFS repos have the same shape (`filter.lfs.process`), and auto-committing
+LFS pointers without the filter would store the large file itself instead of its pointer.
+
+**Decision.** `commit_engine.local_filter_problem(root)` runs
+`git config --local --includes --name-only --get-regexp '^filter\..*\.(clean|process)$'` (and the same with
+`--worktree` when `extensions.worktreeConfig` is on). Any match, or any error other than "no such key", means the
+repo is skipped (fail closed). `eligible_root` checks it before the plugin runs `status` on a repo, and
+`_repo_problem` checks it again, so `commit_paths` and `commit_session_paths` refuse with
+`repo config defines content filters (...)`. `smudge`-only filters do not count (`status` never runs them) and
+global/system config is not checked (it is the user's own).
+
+**Consequences.** Repos with local filters, LFS included, get no automatic commits; the agent or the user commits
+them by hand. The check costs one or two `git config` calls per eligible lookup.
