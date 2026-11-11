@@ -38,7 +38,8 @@ Identity = tuple[str, str]
 
 def _git_out(root: Path, *args: str, stdin: bytes | None = None, env: dict | None = None) -> tuple[int, bytes]:
     try:
-        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "-c", "core.quotepath=false", *args], cwd=root,
+        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "-c", "log.showSignature=false",
+                               "-c", "core.quotepath=false", *args], cwd=root,
                               input=stdin, capture_output=True, timeout=60, check=False, env=env)
         return done.returncode, done.stdout if done.returncode == 0 else done.stderr
     except (OSError, subprocess.SubprocessError) as error:
@@ -264,7 +265,8 @@ def _older_than(stamp: str, cutoff: datetime) -> bool:
 def last_commit_at(root: Path, rel: str) -> datetime | None:
     """Committer time (UTC) of the newest commit that touched `rel`, or None (untracked, no git, any error)."""
     try:
-        done = subprocess.run(["git", "-C", str(root), "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "log", "-1", "--format=%cI", "--", rel],
+        done = subprocess.run(["git", "-C", str(root), "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}",
+                               "-c", "log.showSignature=false", "log", "-1", "--format=%cI", "--", rel],
                               capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.SubprocessError):
         return None

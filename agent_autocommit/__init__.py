@@ -243,7 +243,8 @@ def excluded(path: Path, *, repo: bool = False) -> str | None:
 
 def _git(root: Path | str, *args: str) -> tuple[int, str]:
     try:
-        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "-c", "core.quotepath=false", *args], cwd=str(root), capture_output=True,
+        done = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", f"core.hooksPath={os.devnull}", "-c", "log.showSignature=false",
+                               "-c", "core.quotepath=false", *args], cwd=str(root), capture_output=True,
                               text=True, timeout=30, check=False)
         return done.returncode, done.stdout if done.returncode == 0 else done.stderr
     except (OSError, subprocess.SubprocessError) as error:
@@ -386,7 +387,7 @@ def _command_paths(command, base: Path) -> list[Path]:
 
 
 def _status(root: Path) -> dict[str, str]:
-    code, out = _git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+    code, out = _git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignore-submodules=all")
     if code:
         return {}
     result: dict[str, str] = {}

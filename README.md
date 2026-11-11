@@ -57,6 +57,9 @@ Bridging the gap between raw developer tools and real-world business operations.
   config) defines `filter.<name>.clean` or `filter.<name>.process` is skipped entirely, before any `git status`.
   This includes Git LFS repos (`git lfs install --local`). Filters in your global or system config are yours and
   do not cause a skip. See ADR-005.
+- **Never runs commands from a repo's signing config.** Every `git log` runs with `-c log.showSignature=false`, so a
+  repo's `gpg.program` or `gpg.ssh.program` is never called, and `git status` runs with `--ignore-submodules=all`, so
+  a submodule's own filters are never run. See ADR-006.
 
 ## Install
 

@@ -105,3 +105,24 @@ global/system config is not checked (it is the user's own).
 
 **Consequences.** Repos with local filters, LFS included, get no automatic commits; the agent or the user commits
 them by hand. The check costs one or two `git config` calls per eligible lookup.
+
+## ADR-006: Never let `git log` verify signatures, and keep `status` out of submodules
+
+**Status:** accepted (2026-11-11)
+
+**Context.** Same threat as ADR-005: a repo's own `.git/config` is untrusted. With `log.showSignature=true` plus
+`gpg.program=<command>` (or `gpg.format=ssh` + `gpg.ssh.program=<command>`), every `git log`/`show` that lists a
+signed commit runs that command on the host, outside the terminal sandbox and without an approval prompt. The plugin
+runs `git log` to check the authors of hand commits and to find when a path was last committed. Separately,
+`git status` recurses into submodules, and a submodule has its own config that the ADR-005 filter check never reads,
+so a submodule's clean filter could still run on a racily clean file. Both reproduced in
+`tests/test_repo_config_commands.py` (each test has a control showing plain git does run the command).
+
+**Decision.** Every git argv the plugin builds (`_git` in `__init__.py`, `_git_out` and `last_commit_at` in
+`commit_engine.py`) carries `-c log.showSignature=false` next to `core.hooksPath`. It only affects `log`/`show`, so
+it is safe on every call. `_status` runs `git status ... --ignore-submodules=all`.
+
+**Consequences.** No signature verification ever runs from the plugin. The superproject's before/after snapshot no
+longer shows submodule changes (a moved gitlink or a dirty submodule). A file edited inside a submodule still resolves
+to the submodule itself (`rev-parse --show-toplevel`), which is then checked as its own repo, ADR-005 filter check
+included.
